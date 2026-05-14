@@ -6,24 +6,24 @@ Project type: Traditional
 
 ## Topic
 
-We are investigating home-field advantage in English Premier League matches. Our question is whether home teams perform better than away teams using real EPL match data from `epl_final.csv`.
+We are investigating home-field advantage in English Premier League matches. We want to see whether playing at home affects the final result of a match.
 
-The dataset contains match results from 2000 to 2025. For this project, we mainly use the `FullTimeResult` column:
+The data file is `epl_final.csv`. The main column we use is `FullTimeResult`:
 
-- `H` = home win
+- `H` = home team won
 - `D` = draw
-- `A` = away win
+- `A` = away team won
 
-Observed results:
+Observed match results:
 
 | Result | Count |
 |---|---:|
 | Home wins | 4,299 |
 | Draws | 2,313 |
 | Away wins | 2,768 |
-| Total | 9,380 |
+| Total matches | 9,380 |
 
-## Inference Question 1: Are match outcomes equally distributed?
+## Inference Question 1
 
 ### Test
 
@@ -31,27 +31,28 @@ Chi-square goodness-of-fit test
 
 ### Question
 
-Is the distribution of EPL match outcomes different from what would be expected if home-field advantage did not exist?
+Is the distribution of English Premier League match outcomes different from what would be expected if home-field advantage did not exist?
 
 ### Hypotheses
 
 `H0`: Home wins, draws, and away wins are equally likely.  
 `Ha`: Home wins, draws, and away wins are not equally likely.
 
-### Conditions
+### Process
 
-- The data is categorical.
-- There are three outcome groups: home win, draw, away win.
-- The expected count for each group is large enough.
-- Expected count for each group: `9380 / 3 = 3126.67`
+Under the null hypothesis, each outcome would have the same expected count:
 
-### Results
+```text
+9380 / 3 = 3126.67
+```
 
-| Result | Observed | Expected |
+| Outcome | Observed | Expected |
 |---|---:|---:|
-| Home wins | 4,299 | 3,126.67 |
-| Draws | 2,313 | 3,126.67 |
-| Away wins | 2,768 | 3,126.67 |
+| Home win | 4,299 | 3,126.67 |
+| Draw | 2,313 | 3,126.67 |
+| Away win | 2,768 | 3,126.67 |
+
+### Result
 
 Chi-square statistic: `692.45`  
 Degrees of freedom: `2`  
@@ -59,74 +60,90 @@ p-value: about `4.33 x 10^-151`
 
 ### Conclusion
 
-Because the p-value is much smaller than `0.05`, we reject the null hypothesis. There is strong evidence that EPL match outcomes are not equally distributed. Home wins happen much more often than expected under an equal distribution.
+Because the p-value is much smaller than `0.05`, we reject the null hypothesis. EPL match outcomes are not equally distributed, and home wins happen more often than expected under an equal distribution.
 
-## Inference Question 2: Do home teams win more often than away teams?
+## Inference Question 2
 
 ### Test
 
-One-proportion z-test
+Chi-square test for independence
 
 ### Question
 
-After removing draws, is the home win rate higher than the away win rate?
+Is the result of a game independent of the venue?
+
+This test checks whether there is a statistical link between two categorical variables:
+
+- Venue: Home or Away
+- Outcome: Win, Draw, or Loss
 
 ### Hypotheses
 
-`H0: p = 0.50`  
-`Ha: p > 0.50`
+`H0`: Venue and outcome are independent.  
+`Ha`: Venue and outcome are not independent.
 
-Here, `p` is the proportion of home wins among non-draw matches.
+### Process
 
-### Conditions
+Each match is counted from both team perspectives:
 
-- We only use matches that ended with a winner.
-- There are 7,067 non-draw matches.
-- Home wins: 4,299
-- Away wins: 2,768
-- The success/failure counts are both greater than 10.
+- If the home team wins, the home team gets `Win` and the away team gets `Loss`.
+- If the away team wins, the away team gets `Win` and the home team gets `Loss`.
+- If the match is a draw, both teams get `Draw`.
 
-### Results
+Observed two-way table:
 
-Sample proportion:
+| Venue | Win | Draw | Loss | Total |
+|---|---:|---:|---:|---:|
+| Home | 4,299 | 2,313 | 2,768 | 9,380 |
+| Away | 2,768 | 2,313 | 4,299 | 9,380 |
+| Total | 7,067 | 4,626 | 7,067 | 18,760 |
 
-```text
-p-hat = 4299 / 7067 = 0.6083
-```
+Expected counts if venue and outcome are independent:
 
-This means home teams won about `60.83%` of non-draw matches.
+| Venue | Win | Draw | Loss |
+|---|---:|---:|---:|
+| Home | 3,533.50 | 2,313.00 | 3,533.50 |
+| Away | 3,533.50 | 2,313.00 | 3,533.50 |
 
-z-score: `18.21`  
-p-value: about `2.07 x 10^-74`
+### Result
+
+Chi-square statistic: `663.35`  
+Degrees of freedom: `2`  
+p-value: about `9.01 x 10^-145`
 
 ### Conclusion
 
-Because the p-value is much smaller than `0.05`, we reject the null hypothesis. There is strong evidence that home teams win more often than away teams when draws are removed.
+Because the p-value is much smaller than `0.05`, we reject the null hypothesis. There is strong evidence that match outcome is related to venue. Home teams are more likely to win, while away teams are more likely to lose.
+
+## Other Possible Tests
+
+Matched pairs t-test: Compare the difference in points earned at home vs. away for every team in a specific season. This would work best with a complete season. Our current dataset does not include the full 2025-2026 season.
+
+One-proportion z-test: Remove draws and test whether the home win proportion among non-draw matches is greater than `0.50`.
 
 ## Overall Conclusion
 
-Both inference tests support the idea that home-field advantage exists in English Premier League matches. Home teams won more often than away teams, and the difference is statistically significant.
+Both main inference tests support the idea that home-field advantage exists in English Premier League matches. The data shows that home wins are more common than away wins, and the relationship between venue and outcome is statistically significant.
 
 ## Python Pseudocode
 
 ```text
 load epl_final.csv
-count how many rows have FullTimeResult = H, D, and A
+count H, D, and A in the FullTimeResult column
 
-for chi-square test:
-    total matches = H + D + A
+for chi-square goodness-of-fit:
     expected count = total matches / 3
-    calculate chi-square statistic
-    calculate p-value
+    compare observed H, D, A counts to expected counts
+    calculate chi-square statistic and p-value
 
-for one-proportion z-test:
-    remove draws
-    non-draw matches = H + A
-    p-hat = H / non-draw matches
-    compare p-hat to 0.50
-    calculate z-score and p-value
+for chi-square test for independence:
+    create a two-way table:
+        Home venue: Win = H, Draw = D, Loss = A
+        Away venue: Win = A, Draw = D, Loss = H
+    calculate row totals, column totals, and expected counts
+    calculate chi-square statistic and p-value
 
-print all results
+print the results
 ```
 
 To reproduce the results, run:
